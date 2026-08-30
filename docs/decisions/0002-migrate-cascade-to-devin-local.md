@@ -34,6 +34,8 @@ Avant cette migration, ce projet (`cascade-self-config`) était dans un état ob
 > **Note** : Le repo GitHub (`yoikitsune/cascade-self-config`) et le répertoire local (`/home/julien/Sources/cascade-self-config`) gardent leur nom historique pour l'instant. Le renommage du repo GitHub est noté dans `TODO.md` comme tâche différée.
 >
 > **Amendement (2026-08-03)** : Le repo GitHub a été renommé en `yoikitsune/devin-self-config` et le dossier local en `/home/julien/Sources/devin-self-config`. Voir `TODO.md`.
+>
+> **Amendement (2026-08-30)** : La migration des **noms d'outils** Cascade (`trajectory_search`, `run_command`, `read_file`, `grep_search`, `multi_edit`, `read_url_content`, `search_web`) vers les noms d'outils Devin Local canoniques (`webfetch`, `web_search`, `exec`, `read`, `write`, `edit`, `grep`, etc.) n'avait pas été couverte par cette décision. Corrigé par **ADR-0004**. Par ailleurs, les URLs Cascade obsolètes référencées ci-dessous (`/desktop/cascade/memories`, `/desktop/cascade/agents-md`) sont remplacées par la page canonique CLI `/cli/extensibility/rules` qui couvre Rules **et** AGENTS.md ensemble.
 
 ### 2. Migration du chemin d'installation global
 
@@ -49,9 +51,9 @@ Avant cette migration, ce projet (`cascade-self-config`) était dans un état ob
 La Phase 0 du SKILL.md lit maintenant **4 pages** au lieu de 3 :
 
 1. **Devin Local** : `https://docs.devin.ai/desktop/devin-local` (NOUVEAU — modes, permissions, subagents, différences avec Cascade)
-2. **Skills** : `https://docs.devin.ai/cli/extensibility/skills` (CHANGÉ — était `/desktop/cascade/skills` ; Devin Local utilise le format skills de Devin CLI)
-3. **Rules & Memories** : `https://docs.devin.ai/desktop/cascade/memories` (inchangé — toujours la doc de référence pour Rules, avec note explicite que Memories sont Cascade-only)
-4. **AGENTS.md** : `https://docs.devin.ai/desktop/cascade/agents-md` (inchangé — standard cross-agent)
+2. **Skills — overview** : `https://docs.devin.ai/cli/extensibility/skills/overview` (CHANGÉ — était `/desktop/cascade/skills` ; Devin Local utilise le format skills de Devin CLI)
+3. **Skills — creating** : `https://docs.devin.ai/cli/extensibility/skills/creating-skills` (NOUVEAU — référence du format SKILL.md)
+4. **Rules & AGENTS.md** : `https://docs.devin.ai/cli/extensibility/rules` (CHANGÉ — était `/desktop/cascade/memories` + `/desktop/cascade/agents-md` ; la page CLI canonique couvre Rules **et** AGENTS.md ensemble, avec note explicite que Memories sont Cascade-only)
 
 ### Ce qui change par rapport à l'état précédent
 
@@ -84,11 +86,12 @@ La Phase 0 du SKILL.md lit maintenant **4 pages** au lieu de 3 :
 - **Devin Desktop launch** : https://devin.ai/blog/windsurf-is-now-devin-desktop (2 juin 2026)
 - **Devin Desktop FAQ** : https://docs.devin.ai/desktop/devin-desktop-faq — "Cascade remains available through July 1st"
 - **Devin Local docs** : https://docs.devin.ai/desktop/devin-local — "Devin Local is our next-generation agent harness shared with Devin CLI"
-- **Devin CLI Skills docs** : https://docs.devin.ai/cli/extensibility/skills — nouveaux chemins canoniques (`~/.config/devin/skills/`, `~/.agents/skills/`)
-- **Memories & Rules docs** : https://docs.devin.ai/desktop/cascade/memories — "Memories apply to the legacy Cascade agent only. The Devin Local agent does not persist memories."
+- **Devin CLI Skills docs** : https://docs.devin.ai/cli/extensibility/skills/overview — nouveaux chemins canoniques (`~/.config/devin/skills/`, `~/.agents/skills/`)
+- **Rules & AGENTS.md docs** : https://docs.devin.ai/cli/extensibility/rules — page canonique CLI couvrant Rules **et** AGENTS.md ensemble (remplace les pages Cascade obsolètes `/desktop/cascade/memories` et `/desktop/cascade/agents-md`). Les Memories sont Cascade-only et ne s'appliquent pas à Devin Local.
 
 ## Relations
 
 - **Supersede** : le nom `cascade-self-config` et le chemin `~/.codeium/windsurf/skills/` (issus d'ADR-0001)
 - **Conserve** : ADR-0001 (principe de distribution par symlinks — seul le chemin change, pas le principe)
 - **Adopte** : les chemins canoniques de la doc Devin CLI (XDG-convention)
+- **Amended by** : ADR-0004 (migration des noms d'outils Cascade → Devin Local canoniques, non couverte par cette décision originale)

@@ -26,7 +26,7 @@ dcr show <id_prefix>
 dcr export <id_prefix> -o /tmp/conversation-analysis.md
 ```
 
-> **Avantage sur `trajectory_search`** : `dcr show` retourne la conversation complète sans limite de 50 chunks. `dcr export` produit un markdown structuré par rounds/steps, plus facile à analyser que le format fragmenté de `trajectory_search`.
+> **Avantage sur le fallback manuel** : `dcr show` retourne la conversation complète sans limite. `dcr export` produit un markdown structuré par rounds/steps, plus facile à analyser qu'une conversation collée en bloc. (Devin Local n'a pas d'outil natif de recherche d'historique — `trajectory_search` était un outil Cascade, désormais EOL.)
 
 ## Pattern 2 — Rechercher des erreurs récurrentes across conversations
 
@@ -42,8 +42,8 @@ dcr search "failed to"
 dcr search "erreur" -p <project_name>
 
 # Rechercher des patterns spécifiques
-dcr search "trajectory_search"
-dcr search "run_command"
+dcr search "command not found"
+dcr search "exec"
 dcr search "MCP"
 ```
 
@@ -66,9 +66,9 @@ dcr export <id2_prefix> -o /tmp/conv2.md
 ```bash
 # Chercher les mentions d'outils dans les conversations
 dcr search "MCP"
-dcr search "browser_navigate"
-dcr search "run_command"
-dcr search "grep_search"
+dcr search "browser_preview"
+dcr search "exec"
+dcr search "grep"
 
 # Voir les conversations où ces outils ont été mentionnés
 dcr list -l 20
@@ -132,7 +132,7 @@ Markdown structuré :
 
 ## Limites et fallbacks
 
-- Si `dcr` n'est pas installé ou la DB est vide → fallback sur `trajectory_search`
+- Si `dcr` n'est pas installé ou la DB est vide → fallback manuel : demander à l'utilisateur de coller le contenu de la conversation à analyser (Devin Local n'a pas d'outil natif de recherche d'historique)
 - Si la conversation recherchée n'est pas dans la DB → l'auto-sync l'ajoutera à la prochaine commande `dcr` (pas besoin de `dcr sync` manuel)
 - Si la conversation a été supprimée par Windsurf mais est dans la DB → `dcr show` fonctionne (archive permanente)
-- `dcr search` ne fait pas de recherche sémantique (FTS5 keyword only) — pour une recherche sémantique, utiliser `trajectory_search` en complément
+- `dcr search` ne fait pas de recherche sémantique (FTS5 keyword only) — pour une recherche sémantique dans le code, utiliser `code_search` en complément (mais `code_search` ne couvre pas l'historique des conversations)

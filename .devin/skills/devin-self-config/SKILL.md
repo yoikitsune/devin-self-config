@@ -36,7 +36,7 @@ Ces fichiers projet permettent d'accumuler de la mémoire par projet sans pollue
 - **`dcr` (Devin Conversations Retriever)** doit être installé globalement. Ce skill dépend fortement de l'analyse des conversations pour fonctionner correctement — la Phase 1 entière est construite autour de `dcr`.
   - Installation : `devin-conversations-retriever/scripts/install-skills.sh` (crée le wrapper `~/.local/bin/dcr` + le skill `dcr-conversation` global)
   - Vérifier : `dcr status` (depuis n'importe quel répertoire)
-  - Si `dcr` n'est pas disponible, le skill tombe sur le fallback `trajectory_search` (moins puissant : pas de FTS5, pas de filtres projet/date, pas d'export, pas d'archive permanente)
+  - Si `dcr` n'est pas disponible, le skill tombe sur le fallback manuel : demander à l'utilisateur de coller le contenu de la conversation à analyser (Devin Local n'a pas d'outil natif de recherche dans l'historique des conversations — `trajectory_search` était un outil Cascade, désormais EOL)
 
 ## Quand utiliser ce skill
 
@@ -88,12 +88,14 @@ Phase 5  → commit après validation explicite de l'utilisateur
 
 **À chaque invocation de ce skill**, lire les 4 pages de documentation officielle pour avoir une vue d'ensemble à jour du fonctionnement des outils de configuration de Devin Local :
 
-1. **Devin Local** : `https://docs.devin.ai/desktop/devin-local` — présentation de l'agent Devin Local (successeur de Cascade), ses modes, ses permissions, ses différences avec Cascade
-2. **Skills** : `https://docs.devin.ai/cli/extensibility/skills` — format et découverte des skills (Devin Local utilise le même format que Devin CLI)
-3. **Rules & Memories** : `https://docs.devin.ai/desktop/cascade/memories` — **Attention : on lit ce lien pour la partie Rules UNIQUEMENT. Les Memories NE SONT PAS utilisées** dans ce skill. Les Memories sont auto-générées, non committées et non partageables, et **s'appliquent uniquement à l'agent Cascade (legacy)** — Devin Local ne persiste pas de memories. Pour le savoir durable, on utilise Rules, Skills ou AGENTS.md.
-4. **AGENTS.md** : `https://docs.devin.ai/desktop/cascade/agents-md` — scoping et format AGENTS.md (standard cross-agent, toujours valide)
+1. **Devin Local** : `https://docs.devin.ai/desktop/devin-local` — présentation de l'agent Devin Local, ses modes (Normal/Plan/Ask), ses permissions (Deny/Ask/Allow), ses subagents, le sandboxing
+2. **Skills — overview** : `https://docs.devin.ai/cli/extensibility/skills/overview` — format, découverte, scopes (projet/global), triggers (`user`/`model`)
+3. **Skills — creating** : `https://docs.devin.ai/cli/extensibility/skills/creating-skills` — référence complète du format `SKILL.md` : frontmatter (`name`, `description`, `allowed-tools`, `triggers`, `model`, `subagent`, `permissions`), contenu du prompt, exemples
+4. **Rules & AGENTS.md** : `https://docs.devin.ai/cli/extensibility/rules` — page CLI canonique couvrant Rules **et** AGENTS.md ensemble : `AGENTS.md`, `AGENTS.local.md`, `AGENT.md`, `.devin/rules/*.md`, `.devin/global_rules.md`, règles globales, imports depuis autres outils (Cursor/Windsurf/Claude), `read_config_from`
 
-Utiliser `read_url_content` pour chaque lien. Si une page n'est pas accessible ou si des informations semblent manquantes, faire une `search_web` pour parfaire les connaissances (ex: "Devin Local skills format 2026", "Devin CLI skills progressive disclosure", "Devin AGENTS.md scoping").
+> **Note sur les Memories** : Devin Local ne persiste pas de memories (c'était un mécanisme Cascade, désormais EOL). Pour le savoir durable, on utilise Rules, Skills ou AGENTS.md — jamais de memories.
+
+Utiliser `webfetch` pour chaque lien. Si une page n'est pas accessible ou si des informations semblent manquantes, faire une `web_search` pour parfaire les connaissances (ex: "Devin Local skills format 2026", "Devin CLI skills progressive disclosure", "Devin AGENTS.md scoping").
 
 > **Pourquoi cette étape** : La documentation officielle peut évoluer. Les références locales dans `references/` sont un résumé, mais la source de vérité est la doc en ligne. Cette lecture garantit que les artifacts créés respectent les conventions actuelles.
 
@@ -145,7 +147,7 @@ Après la migration des fichiers de mémoire, vérifier si une copie locale obso
    - Si présent → le lire pour connaître les outils et limites de ce projet
 
 3. **Chercher** `<projet>/.devin/AGENTS.md`
-   - Si présent → le lire pour connaître l'inventaire des rules/skills/workflows existants
+   - Si présent → le lire pour connaître l'inventaire des rules/skills existants
 
 > **Note** : Les références génériques (`rules-guide.md`, `skills-guide.md`, `agents-md-guide.md`) sont dans le répertoire global du skill et toujours disponibles. Seuls les fichiers de mémoire projet-spécifiques nécessitent une vérification.
 
@@ -156,7 +158,7 @@ Après la migration des fichiers de mémoire, vérifier si une copie locale obso
 1. **Analyser la conversation source** : Utiliser `dcr` (Devin Conversations Retriever) pour récupérer et analyser la conversation. Consulter `references/dcr-diagnostic-patterns.md` pour les procédures détaillées. Adapter selon le mode :
    - **Mode explicite** : l'utilisateur a décrit le problème ou l'amélioration souhaitée → `dcr search "<mot-clé>"` pour recherche ciblée, puis `dcr show <id>` pour la conversation complète
    - **Mode libre** : l'utilisateur n'a rien décrit → `dcr list -l 10` pour identifier la conversation (auto-sync avant la commande), puis `dcr show <id>` ou `dcr export <id>` pour parcours systématique et identification de toutes les anomalies (commandes échouées, mauvais outils utilisés, prérequis manquants, étapes gaspillées, méthodes sous-optimales)
-   - **Fallback** : si `dcr` n'est pas disponible ou la conversation n'est pas dans la DB, utiliser `trajectory_search`
+   - **Fallback** : si `dcr` n'est pas disponible ou la conversation n'est pas dans la DB, demander à l'utilisateur de coller le contenu de la conversation à analyser (pas d'outil natif de recherche d'historique dans Devin Local)
 
 2. **Consulter le catalogue projet** : Lire `diagnostic-catalog.md` (projet) pour vérifier si des erreurs similaires ont déjà été diagnostiquées et corrigées. Éviter de recréer une correction existante.
 
@@ -201,9 +203,8 @@ La correction est-elle une contrainte comportementale courte ?
 │
 ├─ La correction nécessite-t-elle une procédure multi-étapes ?
 │  └─ OUI → Skill (avec fichiers supports si besoin)
-│
-├─ La correction est-elle une procédure réutilisable invoquée par slash-command ?
-│  └─ OUI → Workflow (dans .devin/workflows/)
+│     Note : un skill est invoquable via /skill-name (slash command),
+│     ce qui couvre le cas d'usage des anciens « workflows ».
 │
 ├─ La correction est-elle spécifique à un répertoire ?
 │  └─ OUI → AGENTS.md dans ce répertoire
@@ -228,7 +229,6 @@ La correction est-elle une contrainte comportementale courte ?
 3. **Vérifier l'existence** : Avant de créer, vérifier si une rule/skill similaire existe déjà
    - Lister `.devin/rules/`
    - Lister `.devin/skills/`
-   - Lister `.devin/workflows/`
    - Si similaire → **mettre à jour** l'artifact existant plutôt qu'en créer un nouveau
 
    > **Règle** : Tous les artifacts vont dans `.devin/`. Le dossier `.windsurf/` est déprécié (legacy fallback uniquement). Ne jamais créer de nouvel artifact dans `.windsurf/`.
@@ -237,7 +237,6 @@ La correction est-elle une contrainte comportementale courte ?
    - Rule : frontmatter `trigger` + `description` (si model_decision/glob), contenu concis
    - Skill : frontmatter `name` + `description`, procédure claire, fichiers supports
    - AGENTS.md : markdown simple, pas de frontmatter, instructions ciblées
-   - Workflow : fichier `.md` dans `.devin/workflows/` avec frontmatter `description`
 
    > **Règles de formatage SKILL.md critiques** (violation = skill non détecté par l'agent) :
    > - Frontmatter YAML avec **exactement 3 tirets** `---` (PAS 4 tirets `----`)
@@ -292,7 +291,6 @@ Après validation explicite de l'utilisateur :
 4. **Mettre à jour l'inventaire** :
    - Si nouveau skill → ajouter à `.devin/AGENTS.md` (section Inventory des Skills)
    - Si nouvelle rule → ajouter à `.devin/AGENTS.md` (section Inventory des Rules)
-   - Si nouveau workflow → ajouter à `.devin/AGENTS.md` (section Inventory des Workflows)
 
 5. **Mettre à jour le catalogue projet** : Ajouter les nouvelles entrées ERR-XXX dans `<projet>/.devin/memory/devin-self-config/diagnostic-catalog.md`
 
@@ -319,7 +317,6 @@ Après validation explicite de l'utilisateur :
 1. **Ne commiter QUE les fichiers `.devin/` modifiés** dans le cadre de cette auto-configuration :
    - Rules (`.devin/rules/*.md`)
    - Skills (`.devin/skills/*/SKILL.md` et `references/`)
-   - Workflows (`.devin/workflows/*.md`)
    - AGENTS.md (`.devin/AGENTS.md`)
    - Mémoire projet (`.devin/memory/devin-self-config/`)
 2. **Ne jamais commiter** des fichiers de code applicatif (`lib/`, `functions/`, `test/`, etc.) dans ce workflow
@@ -330,7 +327,7 @@ Après validation explicite de l'utilisateur :
 
 - [ ] J'ai lu les 4 URLs de documentation (Phase 0) — **avant toute autre action**
 - [ ] J'ai vérifié/migré la mémoire projet-spécifique (Phase 0b)
-- [ ] J'ai utilisé `dcr` (ou `trajectory_search` en fallback) pour analyser la conversation source (Phase 1)
+- [ ] J'ai utilisé `dcr` (ou le fallback manuel : contenu collé par l'utilisateur) pour analyser la conversation source (Phase 1)
 - [ ] J'ai identifié chaque erreur de Devin Local dans la conversation
 - [ ] J'ai catégorisé chaque erreur (cli-syntax, tool-selection, etc.)
 - [ ] J'ai choisi un type d'artifact pour chaque correction (Phase 2)

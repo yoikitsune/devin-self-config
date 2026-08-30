@@ -1,8 +1,23 @@
 # Guide AGENTS.md
 
+> Source canonique : `https://docs.devin.ai/cli/extensibility/rules` (page « Rules & AGENTS.md » de la doc Devin CLI). Devin Local lit `AGENTS.md` via le système rules de Devin CLI.
+
 ## Qu'est-ce que AGENTS.md ?
 
 `AGENTS.md` est un fichier markdown (sans frontmatter) qui fournit un contexte permanent à Devin Local pour un répertoire spécifique. Il est chargé automatiquement quand Devin Local travaille dans ce répertoire.
+
+## Fichiers supportés
+
+Devin Local lit les rules depuis tous ces fichiers (traités de manière identique) :
+
+| Fichier | Notes |
+|---|---|
+| `AGENTS.md` | Recommandé |
+| `AGENTS.local.md` | Rules personnelles (à gitignorer) — même comportement always-on |
+| `AGENT.md` | Alternative singulier |
+| `.windsurfrules` | Legacy Windsurf workspace rules |
+
+> **`AGENTS.local.md`** : pour les instructions personnelles non partageables (préférences de travail, habitudes de test). À placer à côté de `AGENTS.md` et à ajouter au `.gitignore`. Suit la même convention que `.devin/config.local.json` — le suffixe `.local.` signale un override personnel.
 
 ## Discovery et Scoping
 
@@ -10,11 +25,19 @@
 - **Workspace scanning** : Tous les fichiers `AGENTS.md` dans le workspace et ses sous-répertoires sont découverts
 - **Git repository support** : Pour les dépôts git, recherche aussi dans les répertoires parents jusqu'au git root
 - **Case insensitive** : `AGENTS.md` et `agents.md` sont tous deux reconnus
+- **Sous-répertoires** : découverte paresseuse quand l'agent accède à des fichiers dans ce répertoire (garde le contexte focalisé)
 
 ### Scoping automatique
 - **Racine du projet** : `AGENTS.md` à la racine = traité comme une rule `always_on` — le contenu complet est inclus dans le system prompt de Devin Local à chaque message
 - **Sous-répertoires** : `AGENTS.md` dans un sous-répertoire = traité comme une rule `glob` avec pattern auto-généré `<directory>/**` — le contenu s'applique uniquement quand Devin Local lit ou modifie des fichiers dans ce répertoire
 - Les AGENTS.md locaux **s'additionnent** au global (pas de remplacement)
+
+### Emplacement global
+Les `AGENTS.md` peuvent aussi être placés dans le répertoire de config global pour s'appliquer à tous les projets :
+- Linux/macOS : `~/.config/devin/AGENTS.md`
+- Windows : `%APPDATA%\devin\AGENTS.md`
+
+> **Compatibilité Claude Code** : Devin Local lit aussi `~/.claude/CLAUDE.md` comme global rule.
 
 ## Format
 

@@ -45,12 +45,15 @@
 
 | Tool | Ce qu'il fait |
 |---|---|
-| `run_command` | Exécuter une commande CLI |
-| `read_file` | Lire un fichier |
-| `write_to_file` | Créer un fichier |
-| `edit` / `multi_edit` | Modifier un fichier existant |
-| `grep_search` | Rechercher dans le code |
-| `code_search` | Recherche sémantique dans le code |
-| `trajectory_search` | Rechercher dans une conversation passée |
-| `search_web` | Recherche web |
-| `read_url_content` | Lire le contenu d'une URL |
+| `exec` | Exécuter une commande CLI (shell persistent) |
+| `read` | Lire un fichier (texte ou image) |
+| `write` | Créer/écraser un fichier |
+| `edit` | Modifier un fichier existant (remplacement exact) |
+| `grep` | Rechercher dans le code (ripgrep) |
+| `find_file_by_name` | Recherche de fichiers par glob pattern |
+| `code_search` | Recherche sémantique dans le code (subagent) |
+| `web_search` | Recherche web |
+| `webfetch` | Lire le contenu d'une URL |
+| `browser_preview` | Lancer un aperçu navigateur d'un serveur web |
+
+> **Note** : Devin Local n'a pas d'outil natif de recherche dans l'historique des conversations (`trajectory_search` était un outil Cascade, désormais EOL). Pour l'analyse de conversations passées, utiliser `dcr` (Devin Conversations Retriever) — voir `references/dcr-diagnostic-patterns.md`.

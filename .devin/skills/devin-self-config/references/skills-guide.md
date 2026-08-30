@@ -14,19 +14,87 @@ skill-name/
 
 ## Syntaxe SKILL.md
 
-Le fichier `SKILL.md` doit avoir un frontmatter YAML obligatoire avec exactement 2 champs :
+Le fichier `SKILL.md` a un frontmatter YAML optionnel suivi du prompt. Tous les champs sont optionnels (le nom par défaut au nom du dossier) :
 
 ```yaml
 ---
 name: skill-name
 description: Brief explanation shown to the model to help it decide when to invoke the skill
+argument-hint: "[file] [options]"
+model: sonnet
+subagent: true
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
+permissions:
+  allow:
+    - Read(src/**)
+  deny:
+    - exec
+  ask:
+    - Write(**)
+triggers:
+  - user
+  - model
 ---
+
+Your prompt content goes here...
 ```
 
-### champs obligatoires
+### Référence des champs frontmatter
 
-- **name** : Identifiant unique du skill (affiché dans l'UI et utilisé pour les @-mentions)
-- **description** : Brève explication montrée au modèle pour l'aider à décider quand invoquer le skill
+| Champ | Type | Défaut | Description |
+|-------|------|--------|-------------|
+| `name` | string | nom du dossier | Nom affiché du skill (utilisé pour `/skill-name`) |
+| `description` | string | none | Affiché dans les complétions slash command et au modèle pour décider de l'invocation |
+| `argument-hint` | string | none | Indice affiché après le nom de commande (ex: `[filename]`) |
+| `model` | string | modèle courant | Override du modèle pour ce skill (ex: `opus`, `sonnet`, `swe`, `codex`) |
+| `subagent` | boolean | `false` | Exécuter le skill comme subagent indépendant (propre context window) |
+| `agent` | string | none | Exécuter comme subagent avec un profil custom spécifique |
+| `allowed-tools` | list | tous les outils | Restreindre les outils disponibles pour le skill |
+| `permissions` | object | hérite | Overrides de permissions (`allow`/`deny`/`ask`) — additifs au permissions de session |
+| `triggers` | list | `[user, model]` | Comment le skill peut être invoqué |
+
+### Triggers
+
+| Trigger | Description | Défaut |
+|----------|-------------|--------|
+| `user` | L'utilisateur invoque via `/skill-name` | Activé |
+| `model` | L'agent invoque autonomement quand pertinent | Activé |
+
+Mettre `triggers: [user]` pour empêcher l'agent d'invoquer le skill de lui-même.
+
+### Outils autorisés (`allowed-tools`)
+
+Outils disponibles : `read`, `edit`, `grep`, `glob`, `exec`. Outils MCP supportés via `mcp__<server>__<tool>` (ex: `mcp__github__list_issues`).
+
+> **Sécurité** : si `allowed-tools` n'est pas spécifié, le skill a accès à tous les outils. Pour les skills sensibles, toujours restreindre au minimum nécessaire.
+
+### Permissions
+
+```yaml
+permissions:
+  allow:
+    - Read(src/**)
+    - Exec(npm run test)
+  deny:
+    - Write(/etc/**)
+    - exec
+  ask:
+    - Write(src/**)
+```
+
+- `allow` — auto-approuvé pendant l'exécution du skill
+- `deny` — bloqué pendant l'exécution
+- `ask` — toujours demande à l'utilisateur
+
+> Les permissions de skill sont **additives** au permissions de session de base. Un skill ne peut pas accorder des permissions refusées à un niveau supérieur (projet ou organisation).
+
+### Exécution en subagent
+
+`subagent: true` fait tourner le skill comme un subagent indépendant avec son propre context window — utile pour les tâches focalisées qui ne doivent pas encombrer la conversation principale. Voir `/cli/subagents` pour les profils custom via `agent: <profile>`.
 
 ### Règles de formatage critiques
 
@@ -38,17 +106,17 @@ description: Brief explanation shown to the model to help it decide when to invo
 
 ## Skill Scopes
 
-### Skills projet
-- `.windsurf/skills/` (emplacement documenté)
-- `.devin/skills/` (emplacement utilisé par ce projet)
-- `.agents/skills/`
-- `.claude/skills/`
+### Skills projet (committés dans git)
+- `.devin/skills/` (emplacement recommandé)
+- `.agents/skills/` (standard cross-agent)
+- `.windsurf/skills/` (legacy, déprécié — même format que `.devin/skills/`)
 
-### Skills globaux (utilisateur)
-- `~/.config/devin/skills/` (emplacement canonique XDG, per ADR-0002)
-- `~/.agents/skills/` (standard cross-agent)
-- `~/.claude/skills/` (compatibilité Claude Code)
-- `~/.codeium/windsurf/skills/` (legacy, Cascade-era — déprécié)
+### Skills globaux (utilisateur, non committés)
+- Linux/macOS : `~/.config/devin/skills/` (emplacement canonique XDG, per ADR-0002)
+- Windows : `%APPDATA%\devin\skills\` (typiquement `C:\Users\<user>\AppData\Roaming\devin\skills\`)
+- `~/.agents/skills/` (standard cross-agent `.agents`)
+
+> **Note** : Les skills tiers installables via des outils compatibles `.agents` fonctionnent avec Devin Local (support du standard `.agents`).
 
 ### Skills système (Enterprise)
 - macOS : `/Library/Application Support/Windsurf/skills/`
@@ -97,13 +165,15 @@ Follow these steps to deploy safely...
 2. **Inclure des ressources pertinentes** : Templates, checklists, et exemples rendent les skills plus utiles.
 3. **Noms descriptifs** : `deploy-to-staging` est meilleur que `deploy1`. Les noms doivent indiquer clairement ce que le skill fait.
 
-## Skills vs Rules vs Workflows
+## Skills vs Rules vs AGENTS.md
 
 | Type | Format | Invocation | Usage |
 |---|---|---|---|
-| **Skill** | `SKILL.md` + références | `@mention` (manuel) ou automatique | Procédures complexes multi-étapes |
+| **Skill** | `SKILL.md` + références | `/skill-name` (slash command) ou automatique (trigger `model`) | Procédures complexes multi-étapes, tâches focalisées |
 | **Rule** | `.md` avec frontmatter | `always_on`, `glob`, `model_decision`, `manual` | Contraintes comportementales courtes |
-| **Workflow** | `.md` dans `workflows/` | `/slash-command` | Tâches répétitives avec étapes définies |
+| **AGENTS.md** | markdown simple (pas de frontmatter) | Automatique par répertoire (racine = always_on, sous-rép = glob) | Contexte structurel d'un module |
+
+> **Note** : les anciens « workflows » (Cascade) n'existent pas dans Devin Local. Les skills couvrent ce cas d'usage via l'invocation `/skill-name` (slash command, trigger `user`).
 
 ## Limites
 

@@ -37,20 +37,49 @@ Patterns valides : `*.js`, `src/**/*.ts`, `**/*.test.ts`, etc.
 ## Emplacements de stockage
 
 ### Rules projet
-- `.devin/rules/*.md` (emplacement recommandé)
-- `.windsurf/rules/*.md` (legacy, déprécié)
+- `.devin/rules/*.md` (emplacement recommandé — un fichier par rule, avec frontmatter `trigger`)
+- `.devin/global_rules.md` (fichier unique always-on, alternative au format directory)
+- `.windsurf/rules/*.md` (legacy, déprécié — `.devin/` prend le pas)
 
 ### Rules globales (utilisateur)
-- `~/.codeium/windsurf/memories/global_rules.md` (fichier unique — chemin legacy, toujours lu par Devin Desktop)
-- Via l'UI : Customizations → Edit → Rules → + Global
+<Tabs>
+  <Tab title="Linux / macOS">
+    - `~/.config/devin/AGENTS.md` (fichier unique, appliqué à tous les projets — always-on)
+    - `~/.devin/rules/*.md` (un fichier par rule, avec frontmatter `trigger`)
+    - `~/.devin/global_rules.md` (fichier unique always-on)
+  </Tab>
+  <Tab title="Windows">
+    - `%APPDATA%\devin\AGENTS.md` (fichier unique, appliqué à tous les projets — always-on)
+    - `~/.devin/rules/*.md` et `~/.devin/global_rules.md` (mêmes chemins que Linux/macOS via le home)
+  </Tab>
+</Tabs>
+
+> **Précédence** : `.devin/` est l'emplacement préféré et prend le pas sur `.windsurf/`. Si `.devin/global_rules.md` et `.windsurf/global_rules.md` existent tous les deux, seul `.devin/global_rules.md` est chargé. Les fichiers de rules dans `.devin/rules/` et `.windsurf/rules/` sont eux chargés en complément.
 
 ### Rules système (Enterprise)
-- `/etc/devin/rules/` ou `/etc/windsurf/rules/`
+- `/etc/devin/rules/` ou `/etc/windsurf/rules/` (déployées par IT, read-only pour l'utilisateur)
 
 ### Discovery
 - Workspace et sous-répertoires : tous les `.devin/rules/` trouvés
 - Git : recherche jusqu'au git root dans les répertoires parents
 - Multi-workspace : déduplication avec le chemin relatif le plus court
+- Les rules en sous-répertoires sont découvertes paresseusement quand l'agent accède à des fichiers dans ce répertoire
+
+### Imports depuis autres outils
+Devin Local peut lire les rules d'autres outils AI. Contrôler quels formats sont importés via `read_config_from` dans `config.json` (`~/.config/devin/config.json` ou `%APPDATA%\devin\config.json` sur Windows, ou `.devin/config.json`) :
+
+```json
+{
+  "read_config_from": {
+    "agents_standard": true,
+    "cursor": true,
+    "windsurf": true,
+    "claude": true
+  }
+}
+```
+
+Formats supportés : `.cursor/rules/*.md` et `.mdc`, `.windsurf/rules/*.md`, `.claude/` (Claude Code), `AGENTS.md`/`AGENTS.local.md`/`AGENT.md`/`.windsurfrules` (standard AGENTS, activé par défaut).
 
 ## Exemples
 

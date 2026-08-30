@@ -1,4 +1,4 @@
-# install-skills.ps1 — expose project skills and CLI companions globally.
+﻿# install-skills.ps1 — expose project skills and CLI companions globally.
 #
 # Usage:
 #   .\scripts\install-skills.ps1              # install (idempotent)
