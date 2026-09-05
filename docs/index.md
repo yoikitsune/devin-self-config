@@ -20,6 +20,7 @@
 | [ADR-0002](decisions/0002-migrate-cascade-to-devin-local.md) | Migration Cascade → Devin Local (renommage + chemins) | Accepted (amended 2026-08-30) |
 | [ADR-0003](decisions/0003-memory-in-devin-memory.md) | Mémoire projet dans `.devin/memory/` au lieu de `.devin/skills/` | Accepted |
 | [ADR-0004](decisions/0004-tool-names-devin-local.md) | Noms d'outils Devin Local canoniques + absence d'équivalent `trajectory_search` | Accepted |
+| [ADR-0005](decisions/0005-mode-alignment-sans-conversation.md) | Mode alignment (diagnostic de conformité sans conversation) + auto-review Phase 4b | Accepted |
 
 ## Scripts
 

@@ -1,6 +1,6 @@
 # AGENTS.md — devin-self-config
 
-> Skill global d'auto-configuration de Devin Local. Permet à Devin Local d'analyser et d'améliorer son propre comportement en modifiant sa configuration `.devin/` (rules, skills, AGENTS.md) à partir du diagnostic de conversations passées.
+> Skill global d'auto-configuration de Devin Local. Permet à Devin Local d'analyser et d'améliorer son propre comportement en modifiant sa configuration `.devin/` (rules, skills, AGENTS.md) à partir du diagnostic de conversations passées (mode conversation) ou de vérifier la conformité des artifacts existants (mode alignment, ADR-0005).
 
 ## Quick Start
 
@@ -20,7 +20,7 @@ Sur Windows : `.\scripts\install-skills.ps1` (junctions, pas besoin d'admin).
 ## Tech Stack
 
 - **Type** : Skill pur (pas de code, pas de CLI) — procédure markdown + références
-- **Dépendance forte** : `dcr` (Devin Conversations Retriever) pour l'analyse de conversations en Phase 1
+- **Dépendance** : `dcr` (Devin Conversations Retriever) requis pour le mode conversation uniquement (Phase 1) — le mode alignment (ADR-0005) n'en a pas besoin
 - **Distribution** : symlink global via `scripts/install-skills.{sh,ps1}` (per ADR-0001, adoptant ADR-0007 du projet dcr)
 - **Chemin global** : `~/.config/devin/skills/` (XDG-convention, per ADR-0002)
 
@@ -35,7 +35,8 @@ Sur Windows : `.\scripts\install-skills.ps1` (junctions, pas besoin d'admin).
 │       ├── 0001-adopt-adr-0007-symlink-distribution.md
 │       ├── 0002-migrate-cascade-to-devin-local.md
 │       ├── 0003-memory-in-devin-memory.md
-│       └── 0004-tool-names-devin-local.md
+│       ├── 0004-tool-names-devin-local.md
+│       └── 0005-mode-alignment-sans-conversation.md
 ├── progress.md            # Tableau de bord vivant
 ├── TODO.md                # Tâches différées (hors scope courant)
 ├── scripts/

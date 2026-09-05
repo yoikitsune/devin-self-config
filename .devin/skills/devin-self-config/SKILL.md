@@ -1,6 +1,6 @@
 ---
 name: devin-self-config
-description: Auto-configuration de Devin Local pour améliorer son comportement. Analyser et corriger des erreurs ou optimiser des méthodes, diagnostiquer les causes, et créer/modifier les artifacts .devin (rules, skills, AGENTS.md) pour éviter la récurrence ou adopter de meilleures pratiques. Utiliser quand l'utilisateur dit "auto-configure-toi", "améliore ta config", "tu as fait une erreur", "tu pourrais faire mieux", ou après une session où Devin Local a été imprécis ou peu efficace.
+description: Auto-configuration de Devin Local pour améliorer son comportement. Analyser et corriger des erreurs ou optimiser des méthodes, diagnostiquer les causes, et créer/modifier les artifacts .devin (rules, skills, AGENTS.md) pour éviter la récurrence ou adopter de meilleures pratiques. Utiliser quand l'utilisateur dit "auto-configure-toi", "améliore ta config", "tu as fait une erreur", "tu pourrais faire mieux", "vérifie la conformité", "check alignment", ou après une session où Devin Local a été imprécis ou peu efficace.
 ---
 
 # Devin Self-Config
@@ -33,12 +33,14 @@ Ces fichiers projet permettent d'accumuler de la mémoire par projet sans pollue
 
 ## Prérequis
 
-- **`dcr` (Devin Conversations Retriever)** doit être installé globalement. Ce skill dépend fortement de l'analyse des conversations pour fonctionner correctement — la Phase 1 entière est construite autour de `dcr`.
+- **`dcr` (Devin Conversations Retriever)** requis pour le **mode conversation** uniquement. Le **mode alignment** (ADR-0005) n'en a pas besoin.
   - Installation : `devin-conversations-retriever/scripts/install-skills.sh` (crée le wrapper `~/.local/bin/dcr` + le skill `dcr-conversation` global)
   - Vérifier : `dcr status` (depuis n'importe quel répertoire)
-  - Si `dcr` n'est pas disponible, le skill tombe sur le fallback manuel : demander à l'utilisateur de coller le contenu de la conversation à analyser (Devin Local n'a pas d'outil natif de recherche dans l'historique des conversations — `trajectory_search` était un outil Cascade, désormais EOL)
+  - Si `dcr` n'est pas disponible, le mode conversation tombe sur le fallback manuel : demander à l'utilisateur de coller le contenu de la conversation à analyser (Devin Local n'a pas d'outil natif de recherche dans l'historique des conversations — `trajectory_search` était un outil Cascade, désormais EOL). Le mode alignment fonctionne sans `dcr`.
 
 ## Quand utiliser ce skill
+
+### Mode conversation (diagnostic réactif)
 
 - L'utilisateur signale une **erreur** de fonctionnement de Devin Local
 - L'utilisateur suggère une **amélioration** de méthode ("tu pourrais faire X plus efficacement", "utilise plutôt tel outil dans ce cas")
@@ -47,38 +49,49 @@ Ces fichiers projet permettent d'accumuler de la mémoire par projet sans pollue
 - L'utilisateur fournit une conversation passée à analyser
 - L'utilisateur veut que Devin Local adopte une nouvelle pratique de travail
 
+### Mode alignment (diagnostic préventif — ADR-0005)
+
+- L'utilisateur invoque `@devin-self-config` **sans référence de conversation**
+- L'utilisateur dit "vérifie la conformité", "check alignment", "est-ce que mes artifacts sont à jour"
+- L'utilisateur développe un plugin qui crée des artifacts Devin (skills, rules, agents) et veut vérifier qu'ils respectent la doc courante
+- L'utilisateur veut un audit préventif des artifacts `.devin/` du projet courant
+
 ## Ce que ce skill N'EST PAS
 
 - ❌ Ce skill **n'est pas** un outil de résumé de conversation
-- ❌ Ce skill **n'est pas** un outil de recommandations projet (logging, code, architecture)
+- ❌ Ce skill **n'est pas** un outil de recommandations sur le **code applicatif** ou l'**architecture du projet** (logging, architecture, choix techniques)
 - ❌ Ce skill **ne demande pas** à l'utilisateur quoi faire — il diagnostique, propose, puis agit après validation
-- ✅ Ce skill analyse **le comportement de Devin Local lui-même** (erreurs ou améliorations) et crée des corrections dans `.devin/`
+- ✅ Mode conversation : analyse **le comportement de Devin Local** (erreurs, améliorations) et crée des corrections dans `.devin/`
+- ✅ Mode alignment : analyse **la conformité des artifacts Devin** (format, limites, best practices) et les corrige
 
-> Si tu te surprends à résumer la conversation ou à donner des recommandations sur le projet, **tu es hors-sujet**. Reviens au diagnostic du comportement de Devin Local.
+> Si tu te surprends à résumer la conversation, à faire une revue de code, ou à donner des recommandations sur l'architecture du projet, **tu es hors-sujet**. Reviens au diagnostic (comportement de Devin Local ou conformité des artifacts Devin).
 
 ## Procédure d'invocation attendue
 
 L'utilisateur ouvre une **nouvelle conversation dédiée** (pas dans la conversation à analyser) et fournit :
 
 1. `@devin-self-config` — invocation du skill
-2. `@[conversation:...]` — référence de la conversation à analyser
+2. `@[conversation:...]` — référence de la conversation à analyser (mode conversation uniquement)
 3. Optionnellement : une description explicite du problème observé
 
-Deux modes d'analyse :
-- **Mode explicite** : l'utilisateur a décrit le problème → se concentrer sur ce point précis
-- **Mode libre** : l'utilisateur n'a rien décrit → parcours systématique de la conversation pour identifier les erreurs de Devin Local
+Trois modes d'analyse :
+- **Mode explicite** (conversation) : l'utilisateur a décrit le problème → se concentrer sur ce point précis
+- **Mode libre** (conversation) : l'utilisateur n'a rien décrit → parcours systématique de la conversation pour identifier les erreurs de Devin Local
+- **Mode alignment** (sans conversation — ADR-0005) : l'utilisateur invoque le skill sans `@[conversation:...]` → diagnostiquer la conformité des artifacts Devin du projet courant avec la doc officielle, sans analyser de conversation
 
 Le déroulement attendu est :
 
 ```
 Phase 0  → lire la doc officielle (PREMIÈRE ACTION, avant toute analyse)
 Phase 0b → vérifier/migrer la mémoire projet-spécifique
-Phase 1  → dcr (conversation retriever) sur la conversation + diagnostic des erreurs
+Phase 1  → diagnostic :
+           ├─ mode conversation : dcr sur la conversation + diagnostic des erreurs
+           └─ mode alignment : inspecter les artifacts .devin/ + comparer avec la doc
 Phase 2  → choix d'artifact pour chaque correction
 Phase 3  → création/modification des artifacts
 Phase 4a → rapport de diagnostic à l'utilisateur (avant action)
     → l'utilisateur valide ou rediscute
-Phase 4b → après validation : rapport de ce qui a été créé/modifié
+Phase 4b → après validation : auto-review + rapport de ce qui a été créé/modifié
 Phase 5  → commit après validation explicite de l'utilisateur
 ```
 
@@ -90,7 +103,7 @@ Phase 5  → commit après validation explicite de l'utilisateur
 
 1. **Devin Local** : `https://docs.devin.ai/desktop/devin-local` — présentation de l'agent Devin Local, ses modes (Normal/Plan/Ask), ses permissions (Deny/Ask/Allow), ses subagents, le sandboxing
 2. **Skills — overview** : `https://docs.devin.ai/cli/extensibility/skills/overview` — format, découverte, scopes (projet/global), triggers (`user`/`model`)
-3. **Skills — creating** : `https://docs.devin.ai/cli/extensibility/skills/creating-skills` — référence complète du format `SKILL.md` : frontmatter (`name`, `description`, `allowed-tools`, `triggers`, `model`, `subagent`, `permissions`), contenu du prompt, exemples
+3. **Skills — creating** : `https://docs.devin.ai/cli/extensibility/skills/creating-skills` — référence complète du format `SKILL.md` : frontmatter (`name`, `description`, `argument-hint`, `model`, `subagent`, `agent`, `allowed-tools`, `permissions`, `triggers`), contenu du prompt, exemples
 4. **Rules & AGENTS.md** : `https://docs.devin.ai/cli/extensibility/rules` — page CLI canonique couvrant Rules **et** AGENTS.md ensemble : `AGENTS.md`, `AGENTS.local.md`, `AGENT.md`, `.devin/rules/*.md`, `.devin/global_rules.md`, règles globales, imports depuis autres outils (Cursor/Windsurf/Claude), `read_config_from`
 
 > **Note sur les Memories** : Devin Local ne persiste pas de memories (c'était un mécanisme Cascade, désormais EOL). Pour le savoir durable, on utilise Rules, Skills ou AGENTS.md — jamais de memories.
@@ -155,6 +168,8 @@ Après la migration des fichiers de mémoire, vérifier si une copie locale obso
 
 ### Phase 1 — Diagnostic
 
+#### Mode conversation (explicite ou libre)
+
 1. **Analyser la conversation source** : Utiliser `dcr` (Devin Conversations Retriever) pour récupérer et analyser la conversation. Consulter `references/dcr-diagnostic-patterns.md` pour les procédures détaillées. Adapter selon le mode :
    - **Mode explicite** : l'utilisateur a décrit le problème ou l'amélioration souhaitée → `dcr search "<mot-clé>"` pour recherche ciblée, puis `dcr show <id>` pour la conversation complète
    - **Mode libre** : l'utilisateur n'a rien décrit → `dcr list -l 10` pour identifier la conversation (auto-sync avant la commande), puis `dcr show <id>` ou `dcr export <id>` pour parcours systématique et identification de toutes les anomalies (commandes échouées, mauvais outils utilisés, prérequis manquants, étapes gaspillées, méthodes sous-optimales)
@@ -189,6 +204,58 @@ Après la migration des fichiers de mémoire, vérifier si une copie locale obso
 
 6. **Déterminer la correction** : Quelle connaissance aurait évité cette erreur ou rendu cette amélioration automatique ?
 
+#### Mode alignment (sans conversation — ADR-0005)
+
+> Ce mode ne nécessite pas `dcr`. Il diagnostique la **conformité des artifacts
+> existants** avec la doc officielle lue en Phase 0, pas le comportement de l'agent
+> dans une conversation.
+
+1. **Inventorier les artifacts Devin du projet courant** :
+   ```bash
+   ls .devin/rules/*.md 2>/dev/null
+   ls .devin/skills/*/SKILL.md 2>/dev/null
+   ls .devin/agents/*.md 2>/dev/null
+   test -f AGENTS.md && echo "AGENTS.md present"
+   ```
+
+2. **Consulter le catalogue projet** : Lire `diagnostic-catalog.md` (projet) pour
+   vérifier si des gaps similaires ont déjà été diagnostiqués et corrigés.
+
+3. **Pour chaque artifact, vérifier la conformité avec la doc** (lue en Phase 0) et les
+   guides `references/` correspondants. Checklist compacte — consulter le guide pour le
+   détail des critères :
+
+   **Rules** (`.devin/rules/*.md`) — critères détaillés dans `references/rules-guide.md` :
+   - Frontmatter valide (`trigger`, `globs` si glob, `description` si model_decision/glob)
+   - Taille < 12 000 caractères
+   - Pas de règle générique ("write good code" — déjà dans le training data)
+
+   **Skills** (`.devin/skills/*/SKILL.md`) — critères dans `references/skills-guide.md` :
+   - Frontmatter valide (3 tirets `---`, `name`+`description`, pas de `: ` dans la description)
+   - `head -1 SKILL.md` affiche `---`
+   - Taille < 500 lignes
+   - `allowed-tools` manquant → signaler (recommander restriction si safety-critique)
+   - Fields utiles non utilisés : `subagent`, `agent`, `permissions`, `model`
+
+   **Subagent profiles** (`.devin/agents/*.md`) — doc : `https://docs.devin.ai/cli/subagents` :
+   - Frontmatter avec `name`, `description`, `allowed-tools`
+   - `model:` présent ou justifié par ADR
+   - Note : ces fichiers sont des profils de subagents custom, **différents** de `AGENTS.md` (rules)
+
+   **AGENTS.md** — critères dans `references/agents-md-guide.md` :
+   - Plain markdown, pas de frontmatter, concis, pas de redondance avec les rules
+
+4. **Catégoriser les gaps** :
+   - `format` : Violation de format (frontmatter cassé, champ manquant, `: ` dans description)
+   - `size` : Limite dépassée (rule > 12 000 chars, skill > 500 lignes)
+   - `best-practice` : Bonne pratique non respectée (allowed-tools manquant, rule trop générique)
+   - `deprecated` : Usage d'un field ou pattern déprécié par la doc courante
+   - `unused-capability` : Field ou capacité disponible que l'artifact pourrait exploiter
+
+5. **Déterminer la correction** : Quelle modification de l'artifact le rendrait conforme
+   à la doc courante ? (La correction modifie l'artifact existant, pas le comportement de
+   l'agent — c'est la différence avec le mode conversation.)
+
 ### Phase 2 — Choix de l'artifact
 
 Arbre de décision :
@@ -210,10 +277,12 @@ La correction est-elle une contrainte comportementale courte ?
 │  └─ OUI → AGENTS.md dans ce répertoire
 │
 └─ La correction est-elle un fait ponctuel ?
-   └─ Memory (via create_memory tool)
+   └─ AGENTS.md (section ponctuelle) ou rule model_decision
 ```
 
 **Règle d'or** : Préférer `model_decision` à `always_on` pour économiser le contexte permanent. Une rule `always_on` ne se justifie que si l'erreur peut se reproduire à tout moment sans signal contextuel.
+
+> **Recommandation officielle** : la doc conseille de **privilégier les Skills plutôt que les Rules** quand possible (les skills ne sont injectés dans le contexte que quand pertinent). Le pattern recommandé est d'utiliser une rule pour **référencer** les skills que le modèle doit utiliser dans des scénarios particuliers.
 
 ### Phase 3 — Création de l'artifact
 
@@ -233,33 +302,24 @@ La correction est-elle une contrainte comportementale courte ?
 
    > **Règle** : Tous les artifacts vont dans `.devin/`. Le dossier `.windsurf/` est déprécié (legacy fallback uniquement). Ne jamais créer de nouvel artifact dans `.windsurf/`.
 
-4. **Créer/modifier l'artifact** avec le bon format :
-   - Rule : frontmatter `trigger` + `description` (si model_decision/glob), contenu concis
-   - Skill : frontmatter `name` + `description`, procédure claire, fichiers supports
-   - AGENTS.md : markdown simple, pas de frontmatter, instructions ciblées
-
-   > **Règles de formatage SKILL.md critiques** (violation = skill non détecté par l'agent) :
-   > - Frontmatter YAML avec **exactement 3 tirets** `---` (PAS 4 tirets `----`)
-   > - Le frontmatter doit être **le tout premier contenu du fichier** — aucun titre ni commentaire avant
-   > - La **description ne doit pas contenir `: ` (colon+espace)** — cela casse le parsing YAML. Remplacer par ` -` ou mettre la valeur entre guillemets
-   > - Vérifier après création : `head -1 SKILL.md` (Linux/macOS) ou `Get-Content SKILL.md -TotalCount 1` (Windows PowerShell) doit afficher `---`
-
-5. **Respecter les limites et best practices** :
-   - Rule : simple, concise, spécifique. Pas de règles génériques (déjà dans le training data). Utiliser bullet points et markdown. < 12 000 caractères
-   - Skill SKILL.md : < 500 lignes. Description claire pour l'invocation automatique
-   - AGENTS.md : concis, focalisé sur le répertoire, pas de redondance avec les parents
-   - Utiliser des XML tags pour grouper des règles similaires dans une rule
+4. **Créer/modifier l'artifact** avec le bon format. **Consulter le guide
+   correspondant** pour les règles de formatage détaillées (frontmatter, limites,
+   best practices) — les valeurs clés ne sont pas répétées ici :
+   - Rule : `references/rules-guide.md` (frontmatter `trigger` + `description`, < 12 000 caractères)
+   - Skill : `references/skills-guide.md` (frontmatter `name` + `description`, < 500 lignes, **3 tirets `---` exactement**, pas de `: ` dans la description)
+   - AGENTS.md : `references/agents-md-guide.md` (markdown simple, pas de frontmatter)
 
 ### Phase 4a — Rapport de diagnostic (avant action)
 
 Avant de créer ou modifier des artifacts, présenter un rapport de diagnostic à l'utilisateur pour validation :
 
 ```
-🔍 Diagnostic des erreurs de Devin Local
+🔍 Diagnostic [mode conversation | mode alignment]
 
-Conversation analysée : [nom/référence]
+[Mode conversation] Conversation analysée : [nom/référence]
+[Mode alignment] Artifacts inspectés : [N rules, N skills, N agents, AGENTS.md]
 
-Erreurs identifiées :
+[Erreurs | Gaps] identifié·e·s :
 1. [catégorie] — [description courte] → correction proposée : [type d'artifact]
 2. [catégorie] — [description courte] → correction proposée : [type d'artifact]
 ...
@@ -280,28 +340,36 @@ Après validation explicite de l'utilisateur :
 
 1. **Créer/modifier les artifacts** (Phase 3)
 
-2. **Vérifier la non-surcharge** :
-   - Compter les rules `always_on` — trop = contexte gonflé
-   - Si > 6 rules `always_on`, envisager de convertir certaines en `model_decision`
+2. **Auto-review des modifications** — appliquer les critères du mode alignment (Phase 1)
+   aux artifacts fraîchement créés/modifiés. Le skill doit pratiquer ce qu'il diagnostique :
+   - **Redondance interne** : le SKILL.md ne répète-t-il pas le contenu de ses `references/` ?
+     Préférer un pointeur vers la référence plutôt qu'une copie inline
+   - **Cohérence des modes** : si le skill supporte plusieurs modes (ex. conversation + alignment),
+     les templates, rapports et exemples couvrent-ils tous les modes ?
+   - **Limites** : `wc -l` et `wc -c` sur les fichiers modifiés — signaler si dépassé
+   - **Description frontmatter** : couvre-t-elle tous les triggers d'invocation des modes supportés ?
+   - **Non-surcharge** : compter les rules `always_on` — si > 6, envisager `model_decision`
+   - **Non-duplication** : la nouvelle rule/skill ne chevauche-t-elle pas une existante ?
 
-3. **Vérifier la non-duplication** :
-   - La nouvelle rule ne duplique-t-elle pas une existante ?
-   - Le nouveau skill ne chevauche-t-il pas un existant ?
+   > Si un gap est trouvé lors de l'auto-review, **le corriger immédiatement** avant de
+   > passer à l'étape suivante. Ne pas présenter un rapport de validation sur un artifact
+   > qui ne passe pas ses propres critères de diagnostic.
 
-4. **Mettre à jour l'inventaire** :
+3. **Mettre à jour l'inventaire** :
    - Si nouveau skill → ajouter à `.devin/AGENTS.md` (section Inventory des Skills)
    - Si nouvelle rule → ajouter à `.devin/AGENTS.md` (section Inventory des Rules)
 
-5. **Mettre à jour le catalogue projet** : Ajouter les nouvelles entrées ERR-XXX dans `<projet>/.devin/memory/devin-self-config/diagnostic-catalog.md`
+4. **Mettre à jour le catalogue projet** : Ajouter les nouvelles entrées ERR-XXX dans `<projet>/.devin/memory/devin-self-config/diagnostic-catalog.md`
 
-6. **Présenter le rapport de validation** :
+5. **Présenter le rapport de validation** :
    ```
    ✅ Auto-configuration appliquée
 
-   Erreur diagnostiquée : [catégorie] — [description]
+   [Erreur | Gap] diagnostiqué·e : [catégorie] — [description]
    Correction créée : [type d'artifact] → [chemin]
    Mode d'activation : [trigger]
    Impact contexte : [always_on/model_decision/glob/manual]
+   Auto-review : [✅ passé | ⚠️ N gaps corrigés avant rapport]
 
    Fichiers modifiés :
    - [chemin] (créé/modifié)
@@ -327,12 +395,14 @@ Après validation explicite de l'utilisateur :
 
 - [ ] J'ai lu les 4 URLs de documentation (Phase 0) — **avant toute autre action**
 - [ ] J'ai vérifié/migré la mémoire projet-spécifique (Phase 0b)
-- [ ] J'ai utilisé `dcr` (ou le fallback manuel : contenu collé par l'utilisateur) pour analyser la conversation source (Phase 1)
-- [ ] J'ai identifié chaque erreur de Devin Local dans la conversation
-- [ ] J'ai catégorisé chaque erreur (cli-syntax, tool-selection, etc.)
+- [ ] J'ai identifié le mode (conversation ou alignment) et suivi la Phase 1 correspondante
+- [ ] **Mode conversation** : j'ai utilisé `dcr` (ou le fallback manuel : contenu collé par l'utilisateur) pour analyser la conversation source
+- [ ] **Mode alignment** : j'ai inventorié les artifacts `.devin/` et les ai comparés à la doc
+- [ ] J'ai identifié chaque erreur/gap et catégorisé (cli-syntax, tool-selection, format, size, etc.)
 - [ ] J'ai choisi un type d'artifact pour chaque correction (Phase 2)
 - [ ] J'ai présenté le rapport de diagnostic et attendu la validation (Phase 4a)
 - [ ] Après validation : j'ai créé/modifié les artifacts (Phase 3)
+- [ ] J'ai fait l'auto-review (Phase 4b étape 2) — redondance, cohérence, limites, description
 - [ ] J'ai présenté le rapport de validation (Phase 4b)
 - [ ] J'ai attendu la validation de commit avant de commiter (Phase 5)
 
@@ -340,13 +410,22 @@ Si une case n'est pas cochée, **ne réponds pas encore** — complète l'étape
 
 ## Exemple de bon vs mauvais déroulement
 
-> **Bon comportement** :
+> **Bon comportement — mode conversation** :
 > 1. Lit les 4 URLs de doc (Phase 0)
 > 2. Vérifie/crée la mémoire projet (Phase 0b)
 > 3. `dcr show` / `dcr export` sur la conversation (Phase 1) — voir `references/dcr-diagnostic-patterns.md`
 > 4. "J'ai identifié 3 erreurs : ERR-A (process-gap), ERR-B (missing-prerequisite), ERR-C (cli-syntax)"
 > 5. Propose des corrections (Phase 2) → présente le rapport de diagnostic (Phase 4a)
-> 6. L'utilisateur valide → crée les artifacts (Phase 3) → rapport de validation (Phase 4b)
+> 6. L'utilisateur valide → crée les artifacts (Phase 3) → **auto-review** (Phase 4b étape 2) → rapport de validation (Phase 4b)
+> 7. L'utilisateur valide le commit → commit (Phase 5)
+
+> **Bon comportement — mode alignment** :
+> 1. Lit les 4 URLs de doc (Phase 0)
+> 2. Vérifie/crée la mémoire projet (Phase 0b)
+> 3. Inventorie les artifacts `.devin/` du projet (Phase 1 alignment)
+> 4. "J'ai identifié 2 gaps : GAP-A (format — description avec `: ` dans pp-plan), GAP-B (unused-capability — allowed-tools manquant sur 3 skills)"
+> 5. Propose des corrections (Phase 2) → présente le rapport de diagnostic (Phase 4a)
+> 6. L'utilisateur valide → modifie les artifacts (Phase 3) → **auto-review** (Phase 4b étape 2) → rapport de validation (Phase 4b)
 > 7. L'utilisateur valide le commit → commit (Phase 5)
 
 > **Mauvais comportement — NE PAS FAIRE** :

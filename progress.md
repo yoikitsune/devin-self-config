@@ -1,13 +1,15 @@
 # Progress — devin-self-config
 
-> Dernière mise à jour : 2026-08-30 (ADR-0004 — noms d'outils Devin Local canoniques)
+> Dernière mise à jour : 2026-09-05 (ADR-0005 — mode alignment + auto-review Phase 4b)
 
 ## Current Phase: Stabilisation post-migration
 
-Le projet a migré de Cascade vers Devin Local (ADR-0002), a déplacé la mémoire projet vers `.devin/memory/` (ADR-0003), puis a migré les noms d'outils Cascade vers les noms d'outils Devin Local canoniques (ADR-0004). Toutes les phases actives sont terminées.
+Le projet a migré de Cascade vers Devin Local (ADR-0002), a déplacé la mémoire projet vers `.devin/memory/` (ADR-0003), a migré les noms d'outils Cascade vers les noms d'outils Devin Local canoniques (ADR-0004), puis a ajouté le mode alignment et l'auto-review Phase 4b (ADR-0005). Toutes les phases actives sont terminées.
 
 ## Ce qui est fait
 
+- [x] **ADR-0005 — Mode alignment + auto-review Phase 4b** (2026-09-04) : ajout d'un mode alignment au skill (diagnostic de conformité des artifacts `.devin/` sans conversation source). Auto-review Phase 4b : le skill applique ses propres critères de diagnostic aux artifacts qu'il vient de créer. Anti-redundance : SKILL.md pointe vers les guides `references/` au lieu de répéter les règles de formatage inline. Nouvelles catégories de diagnostic : `format`, `size`, `best-practice`, `deprecated`, `unused-capability`. Template `diagnostic-catalog-template.md` mis à jour avec les catégories par mode. Né d'un besoin concret sur OUTILS_16 (vérifier la conformité d'artifacts sans conversation).
+- [x] **Corriger les gaps des guides vs doc officielle** (2026-09-05) : trigger `agent` ajouté à `rules-guide.md`, recommandation "Skills > Rules" ajoutée, section Plugins ajoutée aux 3 guides, clarification `glob` vs `find_file_by_name` dans `skills-guide.md`, chemin `~/.codeium/<channel>/skills/` ajouté.
 - [x] **ADR-0004 — Noms d'outils Devin Local canoniques** (2026-08-30) : migration des noms d'outils Cascade (`trajectory_search`, `run_command`, `read_file`, `grep_search`, `multi_edit`, `read_url_content`, `search_web`) vers les noms d'outils Devin Local canoniques (`webfetch`, `web_search`, `exec`, `read`, `write`, `edit`, `grep`, `find_file_by_name`, `code_search`, `browser_preview`) dans le SKILL.md, `project-tooling-template.md` et `dcr-diagnostic-patterns.md`. Documente l'absence d'équivalent à `trajectory_search` en Devin Local (fallback manuel). ADR-0002 amendé sur ce gap. Référence résiduelle "workflows" retirée du SKILL.md (concept Cascade EOL).
 - [x] **Mise à jour des références de documentation** (2026-08-30) : section "Maintenance — Mise à jour des références de documentation" ajoutée à `AGENTS.md` (procédure de vérification des liens de doc). Guides `skills-guide.md`, `rules-guide.md`, `agents-md-guide.md` refondus pour aligner avec la doc officielle actuelle (frontmatter `model`/`subagent`/`agent`/`permissions`/`triggers`). URLs canoniques Devin Local/CLI adoptées (page `/cli/extensibility/rules` remplace les pages Cascade obsolètes).
 - [x] **ADR-0003 — Mémoire projet dans `.devin/memory/`** (2026-08-03) : SKILL.md mis à jour (Phase 0b avec migration automatique, tous les chemins mis à jour), ADR créé. La migration des fichiers existants dans les projets utilisateurs se fera automatiquement à la prochaine invocation du skill (Phase 0b).
@@ -48,3 +50,4 @@ Rien actuellement bloqué.
 | [ADR-0002](docs/decisions/0002-migrate-cascade-to-devin-local.md) | Migration Cascade → Devin Local (renommage + chemins) | Accepted (amended 2026-08-30) |
 | [ADR-0003](docs/decisions/0003-memory-in-devin-memory.md) | Mémoire projet dans `.devin/memory/` au lieu de `.devin/skills/` | Accepted |
 | [ADR-0004](docs/decisions/0004-tool-names-devin-local.md) | Noms d'outils Devin Local canoniques + absence d'équivalent `trajectory_search` | Accepted |
+| [ADR-0005](docs/decisions/0005-mode-alignment-sans-conversation.md) | Mode alignment (diagnostic de conformité sans conversation) + auto-review Phase 4b | Accepted |
