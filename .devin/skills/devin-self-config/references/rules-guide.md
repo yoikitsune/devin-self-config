@@ -6,7 +6,7 @@ Une rule est un fichier markdown avec un frontmatter YAML obligatoire :
 
 ```yaml
 ---
-trigger: always_on | model_decision | glob | manual
+trigger: always_on | model_decision | glob | manual | agent
 description: Description du contexte (requis pour model_decision/glob)
 ---
 ```
@@ -19,6 +19,7 @@ description: Description du contexte (requis pour model_decision/glob)
 | `model_decision` | Devin Local décide quand charger en fonction du contexte | Préférence par défaut pour économiser le contexte |
 | `glob` | S'applique uniquement aux fichiers correspondant au pattern | Règles spécifiques à certains types de fichiers |
 | `manual` | Jamais chargé automatiquement, invocation explicite via @rule-name | Documentation ou procédures rarement utilisées |
+| `agent` | Non documenté en détail dans la doc officielle — listé comme trigger valide | Usage à clarifier au cas par cas |
 
 ### Syntaxe glob
 
@@ -81,6 +82,9 @@ Devin Local peut lire les rules d'autres outils AI. Contrôler quels formats son
 
 Formats supportés : `.cursor/rules/*.md` et `.mdc`, `.windsurf/rules/*.md`, `.claude/` (Claude Code), `AGENTS.md`/`AGENTS.local.md`/`AGENT.md`/`.windsurfrules` (standard AGENTS, activé par défaut).
 
+### Plugins
+Les [plugins](https://docs.devin.ai/cli/extensibility/plugins/overview) installés peuvent aussi fournir des rules : un `AGENTS.md` always-on à la racine du plugin plus des fichiers `rules/*.md` avec frontmatter `trigger`.
+
 ## Exemples
 
 ### always_on (erreur critique)
@@ -117,6 +121,12 @@ Dans les fichiers Dart, utiliser uniquement les imports absolus `package:project
 ```
 
 ## Best practices (documentation officielle)
+
+> **Recommandation officielle** : pour améliorer la qualité du code, la vitesse et le
+> coût, **privilégier les Skills plutôt que les Rules** quand possible. Les skills ne
+> sont injectés dans le contexte que quand pertinent, contrairement aux rules always-on.
+> Le pattern recommandé est d'utiliser une rule pour **référencer** les skills que le
+> modèle doit utiliser dans des scénarios particuliers.
 
 - **Garder les rules simples, concises et spécifiques**. Les rules trop longues ou vagues peuvent confondre Devin Local.
 - **Pas de règles génériques** (ex: "write good code") — déjà dans le training data de Devin Local.

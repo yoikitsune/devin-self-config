@@ -68,7 +68,14 @@ Mettre `triggers: [user]` pour empêcher l'agent d'invoquer le skill de lui-mêm
 
 ### Outils autorisés (`allowed-tools`)
 
-Outils disponibles : `read`, `edit`, `grep`, `glob`, `exec`. Outils MCP supportés via `mcp__<server>__<tool>` (ex: `mcp__github__list_issues`).
+Outils disponibles pour `allowed-tools` : `read`, `edit`, `grep`, `glob`, `exec`. Outils MCP supportés via `mcp__<server>__<tool>` (ex: `mcp__github__list_issues`).
+
+> **Note `glob` vs `find_file_by_name`** : `glob` est le nom canonique pour le champ
+> `allowed-tools` dans le frontmatter. L'outil s'appelle `find_file_by_name` dans
+> l'interface d'invocation (tool call). Ce sont deux noms pour le même outil selon le
+> contexte. D'autres outils existent dans devin-desktop (`write`, `code_search`,
+> `web_search`, `webfetch`, `browser_preview`, etc.) mais ne sont pas listés dans
+> `allowed-tools` — ils ne sont pas restreignables via ce champ.
 
 > **Sécurité** : si `allowed-tools` n'est pas spécifié, le skill a accès à tous les outils. Pour les skills sensibles, toujours restreindre au minimum nécessaire.
 
@@ -115,6 +122,7 @@ permissions:
 - Linux/macOS : `~/.config/devin/skills/` (emplacement canonique XDG, per ADR-0002)
 - Windows : `%APPDATA%\devin\skills\` (typiquement `C:\Users\<user>\AppData\Roaming\devin\skills\`)
 - `~/.agents/skills/` (standard cross-agent `.agents`)
+- `~/.codeium/<channel>/skills/` (où `<channel>` est `windsurf`, `windsurf-next`, ou `windsurf-insiders` selon le canal CLI)
 
 > **Note** : Les skills tiers installables via des outils compatibles `.agents` fonctionnent avec Devin Local (support du standard `.agents`).
 

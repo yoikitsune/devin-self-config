@@ -39,6 +39,9 @@ Les `AGENTS.md` peuvent aussi être placés dans le répertoire de config global
 
 > **Compatibilité Claude Code** : Devin Local lit aussi `~/.claude/CLAUDE.md` comme global rule.
 
+### Plugins
+Les [plugins](https://docs.devin.ai/cli/extensibility/plugins/overview) installés peuvent aussi fournir des rules : un `AGENTS.md` always-on à la racine du plugin plus des fichiers `rules/*.md` avec frontmatter `trigger`.
+
 ## Format
 
 Markdown simple, **pas de frontmatter YAML**. Structure typique :
