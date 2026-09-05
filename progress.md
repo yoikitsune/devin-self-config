@@ -38,7 +38,7 @@ Rien actuellement bloqué.
 - **Type** : Skill pur (markdown + références, pas de code)
 - **Distribution** : symlink global via `scripts/install-skills.{sh,ps1}` (per ADR-0001)
 - **Chemin global** : `~/.config/devin/skills/` (XDG-convention, per ADR-0002) — les scripts nettoient automatiquement l'ancien chemin `~/.codeium/windsurf/skills/`
-- **Dépendance forte** : `dcr` (Devin Conversations Retriever) pour l'analyse de conversations en Phase 1 — doit être installé globalement via `devin-conversations-retriever/scripts/install-skills.sh`
+- **Dépendance** : `dcr` (Devin Conversations Retriever) requis pour le mode conversation uniquement (Phase 1) — le mode alignment (ADR-0005) n'en a pas besoin. Installation via `devin-conversations-retriever/scripts/install-skills.sh`
 - **Awareness** : porté par la description tier-1 du skill (~100 tokens), pas par une global rule
 - **Agent cible** : Devin Local (successeur de Cascade depuis le 1er juillet 2026)
 
